@@ -1,0 +1,24 @@
+Collecting basic-pitch
+  Using cached basic_pitch-0.4.0-py2.py3-none-any.whl.metadata (12 kB)
+Requirement already satisfied: librosa>=0.8.0 in /home/kyrac/Documents/programming/python/venv/lib/python3.12/site-packages (from basic-pitch) (0.11.0)
+Requirement already satisfied: mir-eval>=0.6 in /home/kyrac/Documents/programming/python/venv/lib/python3.12/site-packages (from basic-pitch) (0.8.2)
+Requirement already satisfied: numpy>=1.18 in /home/kyrac/Documents/programming/python/venv/lib/python3.12/site-packages (from basic-pitch) (1.26.4)
+Requirement already satisfied: pretty-midi>=0.2.9 in /home/kyrac/Documents/programming/python/venv/lib/python3.12/site-packages (from basic-pitch) (0.2.10)
+Collecting resampy<0.4.3,>=0.2.2 (from basic-pitch)
+  Using cached resampy-0.4.2-py3-none-any.whl.metadata (2.8 kB)
+Requirement already satisfied: scikit-learn in /home/kyrac/Documents/programming/python/venv/lib/python3.12/site-packages (from basic-pitch) (1.7.0)
+Requirement already satisfied: scipy>=1.4.1 in /home/kyrac/Documents/programming/python/venv/lib/python3.12/site-packages (from basic-pitch) (1.16.0)
+Requirement already satisfied: typing-extensions in /home/kyrac/Documents/programming/python/venv/lib/python3.12/site-packages (from basic-pitch) (4.14.0)
+INFO: pip is looking at multiple versions of basic-pitch to determine which version is compatible with other requirements. This could take a while.
+Collecting basic-pitch
+  Using cached basic_pitch-0.3.3-py2.py3-none-any.whl.metadata (12 kB)
+  Using cached basic_pitch-0.3.2-py2.py3-none-any.whl.metadata (12 kB)
+  Using cached basic_pitch-0.3.1-py2.py3-none-any.whl.metadata (12 kB)
+  Using cached basic-pitch-0.3.0.tar.gz (3.5 MB)
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached basic_pitch-0.2.6-py2.py3-none-any.whl.metadata (1.9 kB)
+Collecting numpy<1.24,>=1.18 (from basic-pitch)
+  Using cached numpy-1.23.5.tar.gz (10.7 MB)
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'error'
