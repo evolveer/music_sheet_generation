@@ -124,21 +124,22 @@ class MusicXMLToPDFConverter:
     
     def _check_musescore(self):
         """
-        Check if MuseScore is available
+        Check if MuseScore is available (tries musescore3, musescore, musescore4, mscore)
         
         Returns:
             bool: True if MuseScore is available, False otherwise
         """
-        
-        try:
-            result = subprocess.run(
-                ['which', 'musescore3'],
-                capture_output=True,
-                text=True
-            )
-            return result.returncode == 0
-        except Exception:
-            return False
+        self.musescore_cmd = None
+        candidates = ['musescore3', 'musescore', 'musescore4']
+        for cmd in candidates:
+            try:
+                result = subprocess.run(['which', cmd], capture_output=True, text=True)
+                if result.returncode == 0:
+                    self.musescore_cmd = cmd
+                    return True
+            except Exception:
+                continue
+        return False
     
     def convert_to_png(self, musicxml_path, png_path=None, resolution=300):
         """
@@ -178,7 +179,7 @@ class MusicXMLToPDFConverter:
             # Use MuseScore to convert to PNG
             cmd = [
                 'xvfb-run', '-a',
-                'musescore3',
+                getattr(self, 'musescore_cmd', 'mscore'),
                 '-r', str(resolution),
                 '-o', png_path,
                 musicxml_path
@@ -404,4 +405,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
-
+# This script is intended to be run as a standalone tool
