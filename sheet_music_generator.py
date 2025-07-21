@@ -343,6 +343,276 @@ class SheetMusicGenerator:
             raise
 
 
+    def convert_musicxml_to_pdf(self, musicxml_path, pdf_path=None, use_musescore=True):
+        """
+        Convert a MusicXML file to a visual PDF score
+        
+        Args:
+            musicxml_path (str): Path to the input MusicXML file
+            pdf_path (str, optional): Path for the output PDF file
+            use_musescore (bool): Whether to use MuseScore for conversion
+            
+        Returns:
+            str: Path to the generated PDF file
+        """
+        
+        if not os.path.exists(musicxml_path):
+            raise FileNotFoundError(f"MusicXML file not found: {musicxml_path}")
+        
+        # Generate output path if not provided
+        if pdf_path is None:
+            musicxml_stem = Path(musicxml_path).stem
+            pdf_path = f"{musicxml_stem}_score.pdf"
+        
+        # Ensure output directory exists
+        output_dir = Path(pdf_path).parent
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            print(f"Converting MusicXML to PDF...")
+            print(f"  - Input: {musicxml_path}")
+            print(f"  - Output: {pdf_path}")
+            
+            if use_musescore:
+                success = self._convert_with_musescore(musicxml_path, pdf_path)
+                if success:
+                    print(f"✓ PDF generated successfully with MuseScore: {pdf_path}")
+                    return pdf_path
+                else:
+                    print("⚠ MuseScore conversion failed, trying alternative method...")
+            
+            # Fallback to music21 method
+            success = self._convert_with_music21(musicxml_path, pdf_path)
+            if success:
+                print(f"✓ PDF generated successfully with music21: {pdf_path}")
+                return pdf_path
+            else:
+                raise Exception("All PDF conversion methods failed")
+                
+        except Exception as e:
+            print(f"✗ PDF conversion failed: {str(e)}")
+            raise
+    
+    def _convert_with_musescore(self, musicxml_path, pdf_path):
+        """
+        Convert MusicXML to PDF using MuseScore
+        
+        Args:
+            musicxml_path (str): Path to the input MusicXML file
+            pdf_path (str): Path for the output PDF file
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        
+        try:
+            import subprocess
+            
+            print("Using MuseScore for PDF conversion...")
+            
+            # Use xvfb-run to provide virtual display for MuseScore
+            cmd = [
+                'xvfb-run', '-a',
+                'musescore3',
+                '-o', pdf_path,
+                musicxml_path
+            ]
+            
+            # Run MuseScore conversion
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60  # 60 second timeout
+            )
+            
+            if result.returncode == 0 and os.path.exists(pdf_path):
+                print("✓ MuseScore conversion successful")
+                return True
+            else:
+                print(f"✗ MuseScore conversion failed:")
+                print(f"  Return code: {result.returncode}")
+                if result.stderr:
+                    print(f"  Error: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            print("✗ MuseScore conversion timed out")
+            return False
+        except Exception as e:
+            print(f"✗ MuseScore conversion error: {str(e)}")
+            return False
+    
+    def _convert_with_music21(self, musicxml_path, pdf_path):
+        """
+        Convert MusicXML to PDF using music21 (fallback method)
+        
+        Args:
+            musicxml_path (str): Path to the input MusicXML file
+            pdf_path (str): Path for the output PDF file
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        
+        try:
+            print("Using music21 for PDF conversion...")
+            
+            # Load the MusicXML file
+            score = converter.parse(musicxml_path)
+            
+            # Try to write as PDF
+            score.write('musicxml.pdf', fp=pdf_path)
+            
+            if os.path.exists(pdf_path):
+                print("✓ music21 conversion successful")
+                return True
+            else:
+                print("✗ music21 conversion failed - PDF not created")
+                return False
+                
+        except Exception as e:
+            print(f"✗ music21 conversion error: {str(e)}")
+            return False
+    
+    def convert_musicxml_to_png(self, musicxml_path, png_path=None, resolution=300):
+        """
+        Convert a MusicXML file to a PNG image
+        
+        Args:
+            musicxml_path (str): Path to the input MusicXML file
+            png_path (str, optional): Path for the output PNG file
+            resolution (int): DPI resolution for the image
+            
+        Returns:
+            str: Path to the generated PNG file
+        """
+        
+        if not os.path.exists(musicxml_path):
+            raise FileNotFoundError(f"MusicXML file not found: {musicxml_path}")
+        
+        # Generate output path if not provided
+        if png_path is None:
+            musicxml_stem = Path(musicxml_path).stem
+            png_path = f"{musicxml_stem}_score.png"
+        
+        # Ensure output directory exists
+        output_dir = Path(png_path).parent
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            print(f"Converting MusicXML to PNG...")
+            print(f"  - Input: {musicxml_path}")
+            print(f"  - Output: {png_path}")
+            print(f"  - Resolution: {resolution} DPI")
+            
+            import subprocess
+            
+            # Use MuseScore to convert to PNG
+            cmd = [
+                'xvfb-run', '-a',
+                'musescore3',
+                '-r', str(resolution),
+                '-o', png_path,
+                musicxml_path
+            ]
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if result.returncode == 0:
+                # MuseScore adds page numbers to PNG files (e.g., file-1.png)
+                # Check for the actual generated file
+                png_stem = Path(png_path).stem
+                png_dir = Path(png_path).parent
+                png_ext = Path(png_path).suffix
+                
+                # Look for files with page numbers
+                generated_files = list(png_dir.glob(f"{png_stem}-*.png"))
+                
+                if generated_files:
+                    # If multiple pages, return the first one or rename it
+                    actual_file = generated_files[0]
+                    if str(actual_file) != png_path:
+                        # Rename the first page to the requested filename
+                        import shutil
+                        shutil.move(str(actual_file), png_path)
+                    
+                    print(f"✓ PNG generated successfully: {png_path}")
+                    if len(generated_files) > 1:
+                        print(f"  Note: {len(generated_files)} pages generated, using first page")
+                    return png_path
+                elif os.path.exists(png_path):
+                    print(f"✓ PNG generated successfully: {png_path}")
+                    return png_path
+                else:
+                    print(f"✗ PNG conversion failed: No output file found")
+                    raise Exception("PNG conversion failed - no output file")
+            else:
+                print(f"✗ PNG conversion failed:")
+                print(f"  Return code: {result.returncode}")
+                if result.stderr:
+                    print(f"  Error: {result.stderr}")
+                raise Exception("PNG conversion failed")
+                
+        except subprocess.TimeoutExpired:
+            raise Exception("PNG conversion timed out")
+        except Exception as e:
+            print(f"✗ PNG conversion failed: {str(e)}")
+            raise
+    
+    def batch_convert_to_pdf(self, musicxml_files, output_dir=None):
+        """
+        Convert multiple MusicXML files to PDF
+        
+        Args:
+            musicxml_files (list): List of MusicXML file paths
+            output_dir (str, optional): Output directory for PDF files
+            
+        Returns:
+            list: List of generated PDF file paths
+        """
+        
+        results = []
+        
+        print(f"Batch converting {len(musicxml_files)} MusicXML files to PDF...")
+        print("=" * 60)
+        
+        for i, musicxml_file in enumerate(musicxml_files, 1):
+            print(f"\nProcessing file {i}/{len(musicxml_files)}: {musicxml_file}")
+            
+            try:
+                # Setup output path
+                if output_dir:
+                    output_dir_path = Path(output_dir)
+                    output_dir_path.mkdir(parents=True, exist_ok=True)
+                    pdf_path = output_dir_path / f"{Path(musicxml_file).stem}_score.pdf"
+                else:
+                    pdf_path = None
+                
+                # Convert to PDF
+                result_path = self.convert_musicxml_to_pdf(musicxml_file, str(pdf_path) if pdf_path else None)
+                results.append(result_path)
+                
+                print(f"✓ File {i} converted successfully")
+                
+            except Exception as e:
+                print(f"✗ File {i} conversion failed: {str(e)}")
+                results.append(None)
+        
+        # Summary
+        successful = sum(1 for r in results if r is not None)
+        print(f"\nBatch conversion summary:")
+        print(f"  - Total files: {len(musicxml_files)}")
+        print(f"  - Successful: {successful}")
+        print(f"  - Failed: {len(musicxml_files) - successful}")
+        
+        return results
+
 def main():
     """
     Command-line interface for the sheet music generator

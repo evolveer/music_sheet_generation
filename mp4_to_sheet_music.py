@@ -18,7 +18,7 @@ from pathlib import Path
 
 # Import our custom modules
 from audio_extractor import AudioExtractor
-from music_transcriber_fixed import MusicTranscriber
+from music_transcriber import MusicTranscriber
 from sheet_music_generator import SheetMusicGenerator
 
 
@@ -587,3 +587,4 @@ Supported formats:
 
 if __name__ == "__main__":
     main()
+
